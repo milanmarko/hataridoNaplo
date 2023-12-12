@@ -8,9 +8,9 @@ namespace hataridoNaplo
 {
     internal class MenuWindow
     {
-        private List<string> MenuPoints;
+        private List<string, int> MenuPoints;
         private int SelectedIndex;
-        public MenuWindow(List<string> menuPoints)
+        public MenuWindow(Dictionary<string,int> menuPoints)
         {
             SelectedIndex = 0;
             MenuPoints = menuPoints;
@@ -32,6 +32,11 @@ namespace hataridoNaplo
                     Console.BackgroundColor = ConsoleColor.Black;
                 }
             }
+        }
+
+        public void ChangeSelectedIndex(int change)
+        {
+            SelectedIndex += change;
         }
     }
 }
