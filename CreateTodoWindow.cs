@@ -10,6 +10,7 @@ namespace hataridoNaplo
     {
         public ToDo CreateTodo()
         {
+            Console.Clear();
             Console.Write("Esemény neve: ");
             string title = Console.ReadLine();
             Console.Write("Esemény Leírása: ");

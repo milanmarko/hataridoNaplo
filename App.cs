@@ -20,7 +20,7 @@ namespace hataridoNaplo
             isAppRunning = true;
             ToDoList = GetAllToDos();
             MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Új teendő hozzáadása", "Teendők megtekintése dátum alapján", "Beállítások", "Kilépés" });
-            TodaysToDos = new MenuWindow(ToDoList.Select(x => x.Title).ToArray());
+            TodaysToDos = new MenuWindow(ToDoList.Where(x => x.Deadline.Date == DateTime.Today).Select(x => x.Title).ToArray(), ToDoList.ToArray());
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
             //Console.WriteLine(ToDoList.Count);
@@ -48,11 +48,16 @@ namespace hataridoNaplo
         {
             StreamWriter sw = new StreamWriter("ToDos.txt");
             ToDoList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
+            List<DateTime> datesDone = new List<DateTime>();
             foreach (var ToDo in ToDoList)
             {
                 DateTime date = ToDo.Deadline;
-                List<ToDo> toDosOnDate = ToDoList.Where(x => x.Deadline.Date == date.Date).ToList();
-                sw.WriteLine($"{date.Year}-{date.Month}-{date.Day};{string.Join(';', toDosOnDate.Select(x => x.Title + '\\' + x.Deadline.Hour + ':' + x.Deadline.Minute + '\\' + x.Description).ToList())}");
+                if (!datesDone.Contains(date.Date))
+                {
+                    List<ToDo> toDosOnDate = ToDoList.Where(x => x.Deadline.Date == date.Date).ToList();
+                    sw.WriteLine($"{date.Year}-{date.Month}-{date.Day};{string.Join(';', toDosOnDate.Select(x => x.Title + '\\' + (x.Deadline.Hour < 10 ? '0' : string.Empty)+ x.Deadline.Hour  + ':' + (x.Deadline.Minute < 10 ? '0' : string.Empty) + x.Deadline.Minute + '\\' + x.Description).ToList())}");
+                    datesDone.Add(date.Date);
+                }
             }
             sw.Close();
         }
@@ -79,40 +84,66 @@ namespace hataridoNaplo
         private void OpenWindow(int WindowGlobalIndex)
         {
             PreviousWindow = VisibleWindow;
-            switch (WindowGlobalIndex)
+            if (VisibleWindow == MainMenu)
             {
-                case 0:
-                    VisibleWindow = TodaysToDos;
-                    break;
-                case 1:
-                    ToDoList.Add(CreateTodo.CreateTodo());
-                    Save();
-                    break;
-                default: break;
+                switch (WindowGlobalIndex)
+                {
+                    case 0:
+                        VisibleWindow = TodaysToDos;
+                        break;
+                    case 1:
+                        ToDoList.Add(CreateTodo.CreateTodo());
+                        Save();
+                        List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
+                        TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
+                        break;
+                    case 4:
+                        Save();
+                        throw new Exception();
+                    default: break;
+                }
+            }
+            else if (VisibleWindow == TodaysToDos)
+            {
+                int originalIndex = VisibleWindow.SelectedIndex;
+                PreviousWindow = MainMenu;
+                while (VisibleWindow == TodaysToDos)
+                {
+                    TodaysToDos.ShowToDoDetails(originalIndex);
+                    Route();
+                }
+            }
+        }
+        private void Route()
+        {
+            int keyboardReturn = HandleKeyboard();
+            if (keyboardReturn == 1 || keyboardReturn == -1)
+            {
+                VisibleWindow.ChangeSelectedIndex(keyboardReturn);
+            }
+            else if (keyboardReturn == 2)
+            {
+                VisibleWindow = PreviousWindow;
+            }
+            else if (VisibleWindow == MainMenu || VisibleWindow == TodaysToDos)
+            {
+                OpenWindow(VisibleWindow.SelectedIndex);
             }
         }
         public void RunApp()
         {
-            while (isAppRunning)
+            try
             {
-                //Teljesen át kell variálni
-                //Ablakok váltása TODO
+                while (isAppRunning)
+                {
+                    //Teljesen át kell variálni
+                    //Ablakok váltása TODO
 
-                VisibleWindow.PrintMenuWindowString();
-                int keyboardReturn = HandleKeyboard();
-                if(keyboardReturn == 1 || keyboardReturn == -1)
-                {
-                    VisibleWindow.ChangeSelectedIndex(keyboardReturn);
-                }
-                else if (keyboardReturn == 2)
-                {
-                    VisibleWindow = PreviousWindow;
-                }
-                else if(VisibleWindow == MainMenu)
-                {
-                   OpenWindow(MainMenu.SelectedIndex);
+                    VisibleWindow.PrintMenuWindowString();
+                    Route();
                 }
             }
+            catch { }
         }
     }
 }

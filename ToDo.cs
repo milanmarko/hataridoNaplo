@@ -17,5 +17,10 @@ namespace hataridoNaplo
             Title = title;
             Description = desc;
         }
+
+        public string[] GetDetails()
+        {
+            return new string[] { $"Esemény neve: {Title}", $"Esemény határideje: {Deadline.ToString()}", $"Esemény Leírása: {Description}" };
+        }
     }
 }
