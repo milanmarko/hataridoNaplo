@@ -12,6 +12,7 @@ namespace hataridoNaplo
         private MenuWindow PreviousWindow;
         private MenuWindow MainMenu;
         private MenuWindow TodaysToDos;
+        private MenuWindow SortedByDateToDos;
         private CreateTodoWindow CreateTodo;
         private bool isAppRunning;
         private List<ToDo> ToDoList;
@@ -20,7 +21,8 @@ namespace hataridoNaplo
             isAppRunning = true;
             ToDoList = GetAllToDos();
             MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Új teendő hozzáadása", "Teendők megtekintése dátum alapján", "Beállítások", "Kilépés" });
-            TodaysToDos = new MenuWindow(ToDoList.Where(x => x.Deadline.Date == DateTime.Today).Select(x => x.Title).ToArray(), ToDoList.ToArray());
+            TodaysToDos = new MenuWindow(ToDoList.Where(x => x.Deadline.Date == DateTime.Today).Select(x => x.Title).ToArray());
+            SortedByDateToDos = new MenuWindow(ToDoList.OrderBy(x => x.Deadline.Ticks).Select(x => x.Deadline.ToString()).ToArray());
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
             //Console.WriteLine(ToDoList.Count);
@@ -96,6 +98,10 @@ namespace hataridoNaplo
                         Save();
                         List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
                         TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
+                        SortedByDateToDos = new MenuWindow(ToDoList.OrderBy(x => x.Deadline.Ticks).Select(x => x.Deadline.ToString()).ToArray(), ToDoList.ToArray());
+                        break;
+                    case 2:
+                        VisibleWindow = SortedByDateToDos;
                         break;
                     case 4:
                         Save();
@@ -110,6 +116,16 @@ namespace hataridoNaplo
                 while (VisibleWindow == TodaysToDos)
                 {
                     TodaysToDos.ShowToDoDetails(originalIndex);
+                    Route();
+                }
+            }
+            else if (VisibleWindow == SortedByDateToDos)
+            {
+                int originalIndex = VisibleWindow.SelectedIndex;
+                PreviousWindow = MainMenu;
+                while (VisibleWindow == SortedByDateToDos)
+                {
+                    SortedByDateToDos.ShowToDoDetails(originalIndex);
                     Route();
                 }
             }
