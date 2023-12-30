@@ -16,6 +16,7 @@ namespace hataridoNaplo
         public ToDo DetailedToDo { get; private set; }
         public MenuWindow(string[] menuPoints)
         {
+
             ShowingDetails = false;
             SelectedIndex = 0;
             MenuPoints = menuPoints;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,7 +28,7 @@ namespace hataridoNaplo
             isAppRunning = true;
             ToDoList = GetAllToDos();
             MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Jövőbeli teendők megtekintése", "Új teendő hozzáadása", "Teendők megtekintése megadott dátum alapján", "Beállítások", "Kilépés" });
-            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Jelszó védelem", "Az alkalmazásról" });
+            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Jelszó védelem", "Adatok exportálása az asztalra", "Az alkalmazásról" });
             UpdateLists();
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
@@ -66,7 +67,7 @@ namespace hataridoNaplo
         {
             List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
             List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
-            TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
+            TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => $"{x.Title} - {x.Deadline.TimeOfDay}").ToArray(), TodaysToDosList.ToArray());
 
             var toDosOnTheUserDate = SortedByDateToDosList.Where(x => x.Deadline.Date == UserInput.Date);
             SortedByDateToDos = new MenuWindow(toDosOnTheUserDate.Select(x => x.Title).ToArray(), toDosOnTheUserDate.ToArray());
@@ -92,9 +93,9 @@ namespace hataridoNaplo
             sr.Close();
             return futureReturn;
         }
-        private void Save()
+        private void Save(string path = "")
         {
-            StreamWriter sw = new StreamWriter("ToDos.txt");
+            StreamWriter sw = new StreamWriter($"{path}ToDos.txt");
             ToDoList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
             List<DateTime> datesDone = new List<DateTime>();
             foreach (var ToDo in ToDoList)
@@ -234,6 +235,19 @@ namespace hataridoNaplo
                         break;
                     case 2:
                         Console.Clear();
+                        try
+                        {
+                            Save(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)+'/');
+                            Console.WriteLine("Sikeres exportálás!");
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Sikertelen exportálás, próbálja újra!");
+                        }
+                        Console.ReadKey();
+                        break;
+                    case 3:
+                        Console.Clear();
                         Console.WriteLine("Készítette: Markó Milán és Molnár Bálint");
                         Console.WriteLine("Verzió: 0.8");
                         Console.WriteLine("Készült: 2023.11.31. - 2024.01.01");
@@ -282,6 +296,7 @@ namespace hataridoNaplo
                 VisibleWindow.PrintMenuWindowString();
                 Route();
             }
+            Save();
         }
     }
 }
