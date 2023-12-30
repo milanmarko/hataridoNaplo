@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,10 +21,11 @@ namespace hataridoNaplo
         private List<ToDo> ToDoList;
         public App()
         {
+            getPass();
             isAppRunning = true;
             ToDoList = GetAllToDos();
             MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Új teendő hozzáadása", "Teendők megtekintése dátum alapján", "Beállítások", "Kilépés" });
-            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Teendő törlés név alapján", "Az alkalmazásról" });
+            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Teendő törlés név alapján", "Jelszó védelem" ,"Az alkalmazásról" });
             //List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
             //TodaysToDos = new MenuWindow(null);
             //List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
@@ -32,6 +34,37 @@ namespace hataridoNaplo
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
             //Console.WriteLine(ToDoList.Count);
+        }
+
+        private void getPass()
+        {
+            StreamReader sr = new StreamReader("Pass.txt");
+            string passHash = sr.ReadLine();
+            sr.Close();
+            if(passHash != null)
+            {
+                string pass = "";
+                do
+                {
+                    Console.Write("Jelszó: ");
+                    pass = Console.ReadLine();
+                    MD5 md5 = MD5.Create();
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(pass);
+                    byte[] hash = md5.ComputeHash(inputBytes);
+                    string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
+                    Console.WriteLine(hashString);
+                    if (hashString == passHash)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Hibás jelszó");
+                    }
+
+                } while (pass != passHash);
+                
+            }
         }
 
         public void UpdateLists()
@@ -180,6 +213,26 @@ namespace hataridoNaplo
                         Console.ReadKey();
                         break;
                     case 2:
+                        Console.Write("Jelszó: ");
+                        string pass = Console.ReadLine();
+                        if(pass == "")
+                        {
+                            Console.Write("Jelszó nem lehet üres");
+                            Console.ReadKey();
+                            break;
+                        }
+                        MD5 md5 = MD5.Create();
+                        byte[] inputBytes = Encoding.UTF8.GetBytes(pass);
+                        byte[] hash = md5.ComputeHash(inputBytes);
+                        string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
+                        StreamWriter sw = new StreamWriter("Pass.txt");
+                        //delete all previous lines in Pass.txt
+                        sw.Write(hashString);
+                        sw.Close();
+                        Console.Write("Sikeresen beállítva");
+                        Console.ReadKey();
+                        break;
+                    case 3:
                         Console.Clear();
                         Console.WriteLine("Készítette: Markó Milán és Molnár Bálint");
                         Console.WriteLine("Verzió: 0.8");
