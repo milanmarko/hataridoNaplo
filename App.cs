@@ -8,10 +8,12 @@ namespace hataridoNaplo
 {
     internal class App
     {
+
         private MenuWindow VisibleWindow;
         private MenuWindow PreviousWindow;
         private MenuWindow MainMenu;
         private MenuWindow TodaysToDos;
+        private MenuWindow Settings;
         private MenuWindow SortedByDateToDos;
         private CreateTodoWindow CreateTodo;
         private bool isAppRunning;
@@ -21,12 +23,25 @@ namespace hataridoNaplo
             isAppRunning = true;
             ToDoList = GetAllToDos();
             MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Új teendő hozzáadása", "Teendők megtekintése dátum alapján", "Beállítások", "Kilépés" });
-            TodaysToDos = new MenuWindow(ToDoList.Where(x => x.Deadline.Date == DateTime.Today).Select(x => x.Title).ToArray());
-            SortedByDateToDos = new MenuWindow(ToDoList.OrderBy(x => x.Deadline.Ticks).Select(x => x.Deadline.ToString()).ToArray());
+            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Teendő törlés név alapján", "Az alkalmazásról" });
+            //List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
+            //TodaysToDos = new MenuWindow(null);
+            //List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
+            //SortedByDateToDos = new MenuWindow(null);
+            UpdateLists();
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
             //Console.WriteLine(ToDoList.Count);
         }
+
+        public void UpdateLists()
+        {
+            List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
+            List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
+            TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
+            SortedByDateToDos = new MenuWindow(SortedByDateToDosList.Select(x => x.Deadline.ToString()).ToArray(), SortedByDateToDosList.ToArray());
+        }
+
         private List<ToDo> GetAllToDos()
         {
             List<ToDo> futureReturn = new List<ToDo>();
@@ -79,7 +94,7 @@ namespace hataridoNaplo
                     case ConsoleKey.LeftArrow:
                         return 2;
                     default:
-                        return -2;
+                        return 0;
                 }
             } while (true);
         }
@@ -96,12 +111,13 @@ namespace hataridoNaplo
                     case 1:
                         ToDoList.Add(CreateTodo.CreateTodo());
                         Save();
-                        List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
-                        TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
-                        SortedByDateToDos = new MenuWindow(ToDoList.OrderBy(x => x.Deadline.Ticks).Select(x => x.Deadline.ToString()).ToArray(), ToDoList.ToArray());
+                        UpdateLists();
                         break;
                     case 2:
                         VisibleWindow = SortedByDateToDos;
+                        break;
+                    case 3:
+                        VisibleWindow = Settings;
                         break;
                     case 4:
                         Save();
@@ -129,8 +145,54 @@ namespace hataridoNaplo
                     Route();
                 }
             }
+            else if(VisibleWindow == Settings)
+            {
+                PreviousWindow = MainMenu;
+                switch(WindowGlobalIndex)
+                {
+                    case 0:
+                        Console.Clear();
+                        Console.Write("Biztosan törölni szeretnéd az összes teendőt? (i/n)");
+                        if(Console.ReadKey().Key == ConsoleKey.I)
+                        {
+                            ToDoList.Clear();
+                            Save();
+                            UpdateLists();
+                            Console.Write("\nSikeresen törölve");
+                            Console.ReadKey();
+                        }
+                        break;
+                    case 1:
+                        Console.Write("Teendő neve: ");
+                        string toDoName = Console.ReadLine();
+                        List<ToDo> found = ToDoList.Where(x => x.Title == toDoName).ToList();
+                        ToDoList.RemoveAll(x => x.Title == toDoName);
+                        Save();
+                        if(found.Count == 0)
+                        {
+                            Console.Write("Nincs ilyen nevű teendő");
+                        }
+                        else
+                        {
+                            Console.Write("Sikeresen törölve");
+                            UpdateLists();
+                        }
+                        Console.ReadKey();
+                        break;
+                    case 2:
+                        Console.Clear();
+                        Console.WriteLine("Készítette: Markó Milán és Molnár Bálint");
+                        Console.WriteLine("Verzió: 0.8");
+                        Console.WriteLine("Készült: 2023.11.31. - 2024.01.01");
+                        Console.WriteLine("Nyelv: C#");
+                        Console.WriteLine("Környezet: Visual Studio 2022");
+                        Console.WriteLine("Köszönet: A programozás tanárunknak, aki segített a program elkészítéséhez szükséges felkészítésben");
+                        Console.ReadKey();
+                        break;
+                }
+            }
         }
-        private void Route()
+        public void Route()
         {
             int keyboardReturn = HandleKeyboard();
             if (keyboardReturn == 1 || keyboardReturn == -1)
@@ -141,7 +203,7 @@ namespace hataridoNaplo
             {
                 VisibleWindow = PreviousWindow;
             }
-            else if (VisibleWindow == MainMenu || VisibleWindow == TodaysToDos)
+            else if (VisibleWindow == MainMenu || VisibleWindow == TodaysToDos || VisibleWindow == SortedByDateToDos || VisibleWindow == Settings)
             {
                 OpenWindow(VisibleWindow.SelectedIndex);
             }
