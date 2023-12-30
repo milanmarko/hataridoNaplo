@@ -1,1 +1,5 @@
-﻿2023-12-27;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye
+﻿2023-12-30;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye
+2023-12-31;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye
+2023-12-29;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye
+2023-12-28;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye
+2023-12-27;Karácsonyfa díszítés\12:00\Leírás Helye;Ajándék csomagolása\20:00\Leírás Helye

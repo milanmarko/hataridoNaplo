@@ -16,24 +16,21 @@ namespace hataridoNaplo
         private MenuWindow TodaysToDos;
         private MenuWindow Settings;
         private MenuWindow SortedByDateToDos;
+        private MenuWindow AllToDos;
         private CreateTodoWindow CreateTodo;
         private bool isAppRunning;
         private List<ToDo> ToDoList;
+        private DateTime UserInput;
         public App()
         {
             getPass();
             isAppRunning = true;
             ToDoList = GetAllToDos();
-            MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Új teendő hozzáadása", "Teendők megtekintése dátum alapján", "Beállítások", "Kilépés" });
-            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Teendő törlés név alapján", "Jelszó védelem", "Az alkalmazásról" });
-            //List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
-            //TodaysToDos = new MenuWindow(null);
-            //List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
-            //SortedByDateToDos = new MenuWindow(null);
+            MainMenu = new MenuWindow(new string[] { "Mai teendőim", "Jövőbeli teendők megtekintése", "Új teendő hozzáadása", "Teendők megtekintése megadott dátum alapján", "Beállítások", "Kilépés" });
+            Settings = new MenuWindow(new string[] { "Összes teendő törlése", "Jelszó védelem", "Az alkalmazásról" });
             UpdateLists();
             CreateTodo = new CreateTodoWindow();
             VisibleWindow = MainMenu;
-            //Console.WriteLine(ToDoList.Count);
         }
 
         private void getPass()
@@ -52,7 +49,6 @@ namespace hataridoNaplo
                     byte[] inputBytes = Encoding.UTF8.GetBytes(pass);
                     byte[] hash = md5.ComputeHash(inputBytes);
                     string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
-                    Console.WriteLine(hashString);
                     if (hashString == passHash)
                     {
                         break;
@@ -66,13 +62,17 @@ namespace hataridoNaplo
 
             }
         }
-
-        public void UpdateLists()
+        private void UpdateLists()
         {
             List<ToDo> TodaysToDosList = ToDoList.Where(x => x.Deadline.Date == DateTime.Today).ToList();
             List<ToDo> SortedByDateToDosList = ToDoList.OrderBy(x => x.Deadline.Ticks).ToList();
             TodaysToDos = new MenuWindow(TodaysToDosList.Select(x => x.Title).ToArray(), TodaysToDosList.ToArray());
-            SortedByDateToDos = new MenuWindow(SortedByDateToDosList.Select(x => x.Deadline.ToString()).ToArray(), SortedByDateToDosList.ToArray());
+
+            var toDosOnTheUserDate = SortedByDateToDosList.Where(x => x.Deadline.Date == UserInput.Date);
+            SortedByDateToDos = new MenuWindow(toDosOnTheUserDate.Select(x => x.Title).ToArray(), toDosOnTheUserDate.ToArray());
+
+            var allToDosFromNow = ToDoList.Where(x => x.Deadline > DateTime.Now);
+            AllToDos = new MenuWindow(allToDosFromNow.Select(x => $"{x.Title} - ({x.Deadline})").ToArray(), allToDosFromNow.ToArray());
         }
 
         private List<ToDo> GetAllToDos()
@@ -85,9 +85,7 @@ namespace hataridoNaplo
                 string[] splittedLine = sr.ReadLine().Split(';');
                 for (int i = 1; i < splittedLine.Length; i++)
                 {
-                    Console.WriteLine(splittedLine[0]);
                     string[] toDoDetails = splittedLine[i].Split('\\');
-                    Console.WriteLine(toDoDetails[0]);
                     futureReturn.Add(new ToDo(splittedLine[0], toDoDetails[0], toDoDetails[1], toDoDetails[2]));
                 }
             }
@@ -116,19 +114,14 @@ namespace hataridoNaplo
             do
             {
                 ConsoleKey pressedButton = Console.ReadKey(true).Key;
-                switch (pressedButton)
+                return pressedButton switch
                 {
-                    case ConsoleKey.DownArrow:
-                        return 1;
-                    case ConsoleKey.UpArrow:
-                        return -1;
-                    case ConsoleKey.Enter:
-                        return 0;
-                    case ConsoleKey.LeftArrow:
-                        return 2;
-                    default:
-                        return 0;
-                }
+                    ConsoleKey.DownArrow => 1,
+                    ConsoleKey.UpArrow => -1,
+                    ConsoleKey.Enter => 0,
+                    ConsoleKey.LeftArrow => 2,
+                    _ => 3,
+                };
             } while (true);
         }
         private void OpenWindow(int WindowGlobalIndex)
@@ -142,19 +135,31 @@ namespace hataridoNaplo
                         VisibleWindow = TodaysToDos;
                         break;
                     case 1:
+                        VisibleWindow = AllToDos;
+                        break;
+                    case 2:
                         ToDoList.Add(CreateTodo.CreateTodo());
                         Save();
                         UpdateLists();
                         break;
-                    case 2:
+                    case 3:
+                        Console.Clear();
+                        string userInputStr;
+                        do
+                        {
+                            Console.Write("Adjon meg egy dátumot (éééé-hh-nn): ");
+                            userInputStr = Console.ReadLine();
+                        } while (!DateTime.TryParseExact(userInputStr, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out UserInput));
+                        UpdateLists();
                         VisibleWindow = SortedByDateToDos;
                         break;
-                    case 3:
+                    case 4:
                         VisibleWindow = Settings;
                         break;
-                    case 4:
+                    case 5:
                         Save();
-                        throw new Exception();
+                        isAppRunning = false;
+                        break;
                     default: break;
                 }
             }
@@ -178,6 +183,16 @@ namespace hataridoNaplo
                     Route();
                 }
             }
+            else if(VisibleWindow == AllToDos)
+            {
+                int originalIndex = VisibleWindow.SelectedIndex;
+                PreviousWindow = MainMenu;
+                while (VisibleWindow == AllToDos)
+                {
+                    AllToDos.ShowToDoDetails(originalIndex);
+                    Route();
+                }
+            }
             else if (VisibleWindow == Settings)
             {
                 PreviousWindow = MainMenu;
@@ -196,43 +211,28 @@ namespace hataridoNaplo
                         }
                         break;
                     case 1:
-                        Console.Write("Teendő neve: ");
-                        string toDoName = Console.ReadLine();
-                        List<ToDo> found = ToDoList.Where(x => x.Title == toDoName).ToList();
-                        ToDoList.RemoveAll(x => x.Title == toDoName);
-                        Save();
-                        if (found.Count == 0)
+                        string pass = "";
+                        do
                         {
-                            Console.Write("Nincs ilyen nevű teendő");
-                        }
-                        else
-                        {
-                            Console.Write("Sikeresen törölve");
-                            UpdateLists();
-                        }
-                        Console.ReadKey();
-                        break;
-                    case 2:
-                        Console.Write("Jelszó: ");
-                        string pass = Console.ReadLine();
-                        if (pass == "")
-                        {
-                            Console.Write("Jelszó nem lehet üres");
-                            Console.ReadKey();
-                            break;
-                        }
+                            Console.Write("Jelszó: ");
+                            pass = Console.ReadLine();
+                            if (pass == "")
+                            {
+                                Console.Write("Jelszó nem lehet üres");
+                                Console.ReadKey();
+                            }
+                        } while (pass == "");
                         MD5 md5 = MD5.Create();
                         byte[] inputBytes = Encoding.UTF8.GetBytes(pass);
                         byte[] hash = md5.ComputeHash(inputBytes);
                         string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
                         StreamWriter sw = new StreamWriter("Pass.txt");
-                        //delete all previous lines in Pass.txt
                         sw.Write(hashString);
                         sw.Close();
                         Console.Write("Sikeresen beállítva");
                         Console.ReadKey();
                         break;
-                    case 3:
+                    case 2:
                         Console.Clear();
                         Console.WriteLine("Készítette: Markó Milán és Molnár Bálint");
                         Console.WriteLine("Verzió: 0.8");
@@ -256,25 +256,32 @@ namespace hataridoNaplo
             {
                 VisibleWindow = PreviousWindow;
             }
-            else if (VisibleWindow == MainMenu || VisibleWindow == TodaysToDos || VisibleWindow == SortedByDateToDos || VisibleWindow == Settings)
+            else if ((VisibleWindow == MainMenu || (VisibleWindow == AllToDos && VisibleWindow.isThereAnyTodo()) || (VisibleWindow == TodaysToDos && VisibleWindow.isThereAnyTodo()) || (VisibleWindow == SortedByDateToDos && VisibleWindow.isThereAnyTodo()) || VisibleWindow == Settings) && !VisibleWindow.ShowingDetails)
             {
                 OpenWindow(VisibleWindow.SelectedIndex);
+            }
+            else if ((VisibleWindow == TodaysToDos || VisibleWindow==SortedByDateToDos || VisibleWindow == AllToDos) && VisibleWindow.ShowingDetails && VisibleWindow.SelectedIndex == 3)
+            {
+                Console.Clear();
+                if (ToDoList.Remove(VisibleWindow.DetailedToDo))
+                {
+                    UpdateLists();
+                    Console.WriteLine("Sikeresen törölve!");
+                }
+                else
+                {
+                    Console.WriteLine("Nem sikerült törölni, kérem probálja újra!");
+                }
+                VisibleWindow = PreviousWindow;
             }
         }
         public void RunApp()
         {
-            try
+            while (isAppRunning)
             {
-                while (isAppRunning)
-                {
-                    //Teljesen át kell variálni
-                    //Ablakok váltása TODO
-
-                    VisibleWindow.PrintMenuWindowString();
-                    Route();
-                }
+                VisibleWindow.PrintMenuWindowString();
+                Route();
             }
-            catch { }
         }
     }
 }

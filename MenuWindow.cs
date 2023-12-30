@@ -11,19 +11,20 @@ namespace hataridoNaplo
         private string[] MenuPoints;
         private ToDo[] ToDosIfToDo;
         private int pointsCount;
+        public bool ShowingDetails { get; private set; }
         public int SelectedIndex { get; private set; }
+        public ToDo DetailedToDo { get; private set; }
         public MenuWindow(string[] menuPoints)
         {
+            ShowingDetails = false;
             SelectedIndex = 0;
             MenuPoints = menuPoints;
             pointsCount = MenuPoints.Length;
         }
         public MenuWindow(string[] menuPoints, ToDo[] ToDos)
+            : this(menuPoints)
         {
-            SelectedIndex = 0;
-            MenuPoints = menuPoints;
             ToDosIfToDo = ToDos;
-            pointsCount = menuPoints.Length;
         }
 
         private void PrintSomething(string[] strings)
@@ -47,7 +48,17 @@ namespace hataridoNaplo
         }
         public void PrintMenuWindowString()
         {
-            PrintSomething(MenuPoints);
+            pointsCount = MenuPoints.Length;
+            ShowingDetails = false;
+            if (MenuPoints.Length == 0)
+            {
+                Console.Clear();
+                Console.WriteLine("Nincsenek teendői!");
+            }
+            else
+            {
+                PrintSomething(MenuPoints);
+            }
         }
         
 
@@ -65,10 +76,20 @@ namespace hataridoNaplo
                 SelectedIndex += change;
             }
         }
+        public bool isThereAnyTodo()
+        {
+            if (ToDosIfToDo.Length == 0)
+            {
+                return false;
+            }
+            return true;
+        }
         public void ShowToDoDetails(int index)
         {
-            pointsCount = 3;
-            PrintSomething(ToDosIfToDo[index].GetDetails());
+            ShowingDetails = true;
+            DetailedToDo = ToDosIfToDo[index];
+            pointsCount = 4;
+            PrintSomething(ToDosIfToDo[index].GetDetails().Concat(new string[]{ "[Teendő törlése]"}).ToArray());
         }
     }
 }

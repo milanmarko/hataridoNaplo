@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace hataridoNaplo
 {
@@ -11,14 +12,28 @@ namespace hataridoNaplo
         public ToDo CreateTodo()
         {
             Console.Clear();
-            Console.Write("Esemény neve: ");
-            string title = Console.ReadLine();
-            Console.Write("Esemény Leírása: ");
-            string desc = Console.ReadLine();
-            Console.Write("Esemény határideje (éééé-hh-nn óó:pp): ");
-            string deadline = Console.ReadLine();
-            string[] splittedDeadline = deadline.Split(' ');
-            return new ToDo(splittedDeadline[0], title, splittedDeadline[1], desc);
+            string title, desc, deadline;
+            DateTime deadlineAsADate;
+            do
+            {
+                Console.Write("Esemény neve: ");
+                title = Console.ReadLine();
+            } while (title == "");
+
+            do
+            {
+                Console.Write("Esemény Leírása: ");
+                desc = Console.ReadLine();
+
+            } while (desc == "");
+
+            do
+            {
+                Console.Write("Esemény határideje (éééé-hh-nn óó:pp): ");
+                deadline = Console.ReadLine();
+            } while (!DateTime.TryParseExact(deadline, "yyyy-MM-dd HH:mm", null, DateTimeStyles.None, out deadlineAsADate));
+
+            return new ToDo(deadlineAsADate, title, desc);
         }
     }
 }
